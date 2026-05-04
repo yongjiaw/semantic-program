@@ -26,11 +26,8 @@ The framework is built around:
 - **Semantic Program**  
   A compositional specification of data, computation, and query
 
-- **Dataflow Runtime**  
-  Executes learning and query transparently, separating definition from execution
-
-- **Dimensions**  
-  Shared structure that enables consistent composition across modules
+- **Semantic Context**  
+  Provides runtime binding of modules over shared dimensions, materializing computation for learning and query, while defining and validating program compositions
 
 ---
 
