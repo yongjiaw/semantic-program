@@ -43,7 +43,7 @@ Each dimension owns or participates in structured state. State evolves through e
 
 This makes memory compositional, queryable, inspectable, scalable, and compatible with AI agents. Symbolic handles can coexist with learned representations, statistical models, and dataflow computation.
 
-## SAFER Algebra
+## [SAFER](SAFER.md) Algebra
 
 The current formulation is organized around five core semantic state transition operators:
 
@@ -166,7 +166,7 @@ Planned additions include:
 
 ## Talks
 
-- Soar Workshop 2026: A Dataflow Framework for Structured Memory and Learning in Soar
+- [Soar Workshop 2026: A Dataflow Framework for Structured Memory and Learning in Soar](SoarWorkshop2026.pdf)
 
 ## Repository Direction
 
@@ -200,8 +200,3 @@ Generic Infrastructure
 
 The long-term goal is a framework where memory, computation, query, persistence, compression, and learning can be defined compositionally.
 
-## Author
-
-Yongjia Wang
-
-GitHub: https://github.com/yongjiaw
