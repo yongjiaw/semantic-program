@@ -22,6 +22,45 @@ A scientific discovery agent, for example, should not merely retrieve past exper
 
 Semantic Program explores this problem through a compositional architecture for memory, computation, and query.
 
+## Scope Clarification: Two Related Problems
+
+Semantic Program is motivated by two related but different problems. They share principles — semantic memory, agent control, structured learning, and compositional state evolution — but they have different runtimes and engineering constraints.
+
+### 1. Semantic Control for Data Engineering Systems
+
+The first problem is an industry/data-engineering problem:
+
+> How can a data pipeline safely evolve based on semantic-level knowledge, policies, constraints, lineage, and feedback, with increasing autonomy and minimal human intervention?
+
+In this setting, a Soar-like agent can serve as the control and semantic reasoning layer. It reasons about schemas, dependencies, policies, ownership, lineage, quality, operational constraints, and safe evolution. The actual data pipeline runtime is external: Spark, Flink, Beam, Kafka, databases, orchestration systems, cloud data platforms, or other execution environments.
+
+This problem has significant practical value because current industry systems still rely heavily on manual intervention for semantic data evolution, migration, validation, governance, and pipeline adaptation.
+
+### 2. Extending Soar Semantic Memory Learning
+
+The second problem is specifically about Soar:
+
+> How can Soar's built-in semantic memory support richer semantic learning while preserving Soar's architectural commitments?
+
+In this setting, the runtime is Soar itself: production rules, working memory, Rete matching, semantic memory, and local architectural storage. This imposes different constraints, especially around real-time behavior, architectural generality, and keeping productions and working memory in control.
+
+The goal is not to add hidden background reasoning. The architecture should provide generic, syntactic mechanisms. Productions and working memory should still determine when those mechanisms are used and what structures make them meaningful.
+
+For example, dimension and identity may provide the precondition for generic architectural reconciliation: when productions create a contribution with a dimension and a deterministically computed identity, the architecture can know when merge, aggregation, or statistical learning outside working memory is well-defined.
+
+### Relationship
+
+These two problems are connected, but they should not be collapsed.
+
+The broader SAFER framework applies to both: semantic dimensions, identity, anchoring, factoring, expansion, refinement, lineage, and controlled memory evolution.
+
+However, the implementation commitments differ:
+
+- In the data-engineering problem, SAFER can use external scalable runtimes and persistence systems.
+- In the Soar problem, SAFER must fit within Soar's production/working-memory/semantic-memory architecture and respect its real-time and architectural constraints.
+
+Keeping this distinction explicit helps keep discussions properly scoped.
+
 ## Core Idea
 
 Semantic Program organizes memory around semantic dimensions.
@@ -89,7 +128,16 @@ This allows the same semantic formulation to be implemented over local execution
 
 The initial motivating context is integration with the Soar cognitive architecture.
 
-Soar provides a strong model of symbolic working memory, production rules, episodic memory, and semantic memory. Semantic Program explores how this can be extended with a dataflow-based layer for structured memory evolution.
+Soar provides a strong model of symbolic working memory, production rules, episodic memory, and semantic memory. Semantic Program explores how this can be expressed in a Soar-native way while also remaining useful as a broader framework for semantic state evolution.
+
+For Soar specifically, many SAFER-style operations can be prototyped with existing `smem` mechanisms:
+
+- Forward dependency navigation can be represented as retrieval.
+- Backward navigation can use cue/activation-based retrieval when it is dimension-scoped.
+- Categorization/refinement can be represented as ordinary symbolic attributes with reserved meanings.
+- Current `smem` can be viewed roughly as the special case where the semantic store is one global dimension and each object has its own LTI identity.
+
+The main additional commitment is making dimension and identity first-class so storage can trigger anchored reconciliation rather than creating unrelated LTIs. This connects to the idea that some learning can happen outside working memory while still keeping productions and working memory in control. The architecture would provide generic syntactic reconciliation or aggregation once productions have created the dimension, identity, and contribution structure that make the operation well-defined.
 
 The goal is not to replace production rules or symbolic reasoning. The goal is to give agent memory richer computational support:
 
@@ -199,4 +247,3 @@ Generic Infrastructure
 ```
 
 The long-term goal is a framework where memory, computation, query, persistence, compression, and learning can be defined compositionally.
-
