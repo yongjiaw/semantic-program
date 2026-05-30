@@ -1,0 +1,9 @@
+target/
+.idea/*
+### Scala ###
+.bsp/
+.bloop
+.metals
+.vscode
+.output
+.temp
