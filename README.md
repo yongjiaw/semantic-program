@@ -1,6 +1,6 @@
 # Semantic Program
 
-Semantic Program is a framework for building compositional memory and semantic state systems for AI agents.
+Semantic Program is a framework for building compositional memory and evolving semantic state for autonomous systems.
 
 The central thesis is:
 
@@ -16,7 +16,7 @@ The framework connects three traditions:
 
 ## Motivation
 
-Modern AI systems increasingly need memory that is more structured than raw context windows, logs, databases, or vector retrieval alone.
+Modern autonomous systems increasingly need memory that is more structured than raw context windows, logs, databases, or vector retrieval alone.
 
 A scientific discovery agent, for example, should not merely retrieve past experiments. It should be able to ingest observations, anchor them to stable semantic dimensions, decompose observations into reusable parts, compose new candidate states and hypotheses, refine memory into meaningful categories, and query, persist, compress, and replay learned structure.
 
