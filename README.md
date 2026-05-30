@@ -8,11 +8,11 @@ The central thesis is:
 
 Instead of treating long-term memory as a passive store of past instances, Semantic Program models memory as evolving semantic state: structured, anchored, transformed, queried, compressed, and extended through reusable computation.
 
-The framework connects three traditions:
+The framework connects two traditions:
 
-- Cognitive architectures and agent memory: symbolic memory, semantic memory, episodic memory, production systems, and query-driven reasoning.
-- Dataflow and distributed systems: map, reduce, join, split, union, persistence, retrieval, and scalable execution.
-- AI systems and scientific discovery: systems that accumulate observations, form structured abstractions, test hypotheses, and evolve memory over time.
+- **Agent memory and cognitive architectures:** semantic memory, episodic memory, production systems, query-driven reasoning, and agents that accumulate observations and evolve structured knowledge over time.
+
+- **Distributed computation and storage systems:** scalable, generic containers for computation, retrieval, and persistence, including dataflow, stream/batch processing, key-value stores, and query engines.
 
 ## Motivation
 
