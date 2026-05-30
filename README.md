@@ -48,7 +48,7 @@ dimension + identity + lineage + keyed update
 
 This contract is intentionally small. It says that durable semantic updates should be dimension-scoped, identity-keyed, lineage-preserving, and incrementally maintainable.
 
-Many systems already perform keyed updates: user profiles, entity stores, feature stores, knowledge graphs, semantic memory systems, CDC pipelines, event-sourced applications, and stateful stream processors. The problem is that the semantic meaning of the update is usually buried in custom backend conventions or application code:
+In data applications, keyed updates are already common: user profiles, entity stores, feature stores, knowledge graphs, CDC pipelines, event-sourced applications, and stateful stream processors all maintain state by identity. In those settings, the semantic meaning of the update is often distributed across backend conventions, schemas, pipeline code, and application logic:
 
 ```text
 What dimension is being updated?
@@ -59,7 +59,7 @@ Which aggregation scope should it affect?
 Which downstream compositions should it update, invalidate, or expand?
 ```
 
-Semantic Program makes this hidden contract explicit.
+Semantic Program makes this update contract explicit for data applications, and provides a vocabulary for deciding which parts of the same contract should be exposed in cognitive architectures such as Soar.
 
 ## [SAFER](SAFER.md) Algebra
 
@@ -85,7 +85,7 @@ Expand  - how stored dimensions generate candidate compositions
 Refine  - how memory is partitioned into explicit scopes and categories
 ```
 
-SAFER is not merely a query model. It is an algebra of **semantic state evolution**. Relational algebra and SQL are excellent for querying already-formed relations, but they do not provide a first-class semantic model of keyed update. SQL has `INSERT`, `UPDATE`, and `MERGE`, but identity resolution, provenance, source status, aggregation impact, category scope, and downstream semantic consequences remain outside the language.
+SAFER is not merely a query model. It is an algebra of **semantic state evolution**. In data systems, relational algebra and SQL are excellent for querying already-formed relations. SQL also has `INSERT`, `UPDATE`, and `MERGE`, but the application-level semantics of identity resolution, provenance, source status, aggregation impact, category scope, and downstream semantic consequences are usually defined outside the query language.
 
 ## Anchor as Keyed Semantic Update
 
@@ -102,9 +102,35 @@ status:       observed, inferred, predicted, derived, corrected, hypothetical?
 policy:       replace, merge, accumulate, decay, version, aggregate, or reconcile?
 ```
 
-Without this contract, meaning and lineage are scattered across schemas, storage backends, and custom application logic. With this contract, aggregation, retrieval, expansion, and explanation can be implemented generically above different storage engines.
+In data applications, this contract keeps meaning and lineage from being split across schemas, storage backends, and custom application logic. With the contract in place, aggregation, retrieval, expansion, and explanation can be implemented consistently above different storage engines.
 
-This is one of the main differences between Semantic Program and instance-based memory. Instance memory can store many experiences, but without dimension, identity, and lineage, it does not naturally support principled semantic aggregation or compositional reuse.
+For instance-oriented memory designs, the same contract clarifies how stored experiences become accumulated semantic state. Instance memory can store many experiences; dimension, identity, and lineage specify how those experiences participate in aggregation, retrieval scope, and compositional reuse.
+
+## Design Spectrum: Soar, Data Applications, and Hybrid Control
+
+SAFER provides a shared vocabulary for systems that make different architectural commitments around memory, update, reasoning, and execution. The same algebra can be applied in several settings.
+
+In **data applications**, the focus is scalable state maintenance: keyed updates, aggregation, joins, lineage tracking, materialization, and persistence. SAFER can provide a semantic contract so that dimensions, identities, lineage, and update meaning are preserved across pipelines and storage systems.
+
+In **Soar-native semantic memory**, the focus is cognitive control. Soar places active reasoning in working memory and productions, with semantic memory, episodic memory, and external modules supporting that control loop. SAFER can clarify which semantic-memory capabilities are naturally expressed through Soar's native mechanisms and which additional memory-side options, such as dimension-aware anchoring, trace-aware aggregation, or Expand-style generation, may be worth making explicit.
+
+A third setting is the **hybrid application**: Soar can serve as the control layer for a semantic data application. In this pattern, Soar decides goals, operators, attention, decomposition, categorization, and when to commit or query memory. A SAFER-style data runtime maintains the external semantic state: keyed updates, lineage, aggregation, persistence, and candidate generation over larger data collections.
+
+```text
+Data-application runtime:
+  scalable keyed update, materialization, aggregation, lineage, persistence
+
+Soar-native memory extension:
+  production-centered control with explicit semantic-memory options
+
+Soar-controlled semantic data application:
+  Soar controls task reasoning; SAFER runtime maintains governed semantic state
+
+SAFER:
+  shared vocabulary for dimension, identity, lineage, aggregation, and expansion
+```
+
+This spectrum is useful because it separates control choices from state-maintenance choices. Soar can remain the native control architecture while a SAFER data runtime provides disciplined semantic state evolution for applications that need scalable memory, aggregation, and persistence.
 
 ## Dataflow Interpretation
 
@@ -131,17 +157,28 @@ refinement creates explicit category scopes
 expand generates candidate compositions
 ```
 
-This version can be opinionated because data applications already need governed state evolution, lineage, aggregation, and consistency.
+This is the data-application side of the spectrum. The framework can make stronger commitments because its purpose is governed state evolution, lineage, aggregation, and consistency across many custom keyed-update mechanisms.
 
 ## Relationship to Soar
 
-Soar is an important reference point because it already has a mature and deliberate computational architecture: working memory, production rules, semantic memory, episodic memory, and external modules. Soar's design keeps domain reasoning and control in working memory and productions, and avoids placing implicit computation or reasoning inside long-term memory. That conservative boundary is a strength of the architecture.
+Soar is an important reference point because it already has a mature and deliberate computational architecture: working memory, production rules, semantic memory, episodic memory, and external modules. Soar's design keeps domain reasoning and control in working memory and productions, and avoids placing implicit computation or reasoning inside long-term memory. That boundary is not an accident; it is one of the reasons Soar remains general and inspectable.
 
-SAFER should therefore be understood as a distinct application pattern for Soar, not a default runtime target or a subordinate binding. A Soar implementation should live in the Soar code base and use Soar's native control mechanisms.
+A Soar implementation would be a separate reference implementation of the pattern inside the Soar code base, using Soar's native control mechanisms. SAFER provides vocabulary for discussing which semantic-memory operations are represented through productions and external modules, and which operations may be useful as explicit memory-side capabilities.
 
-The role of SAFER is to make the architectural tradeoff explicit. If semantic memory avoids aggregation, candidate generation, or other implicit computation, the system preserves a clean and general control model. The tradeoff is that some forms of learned semantic abstraction must be implemented manually through productions or external mechanisms. SAFER provides a vocabulary for evaluating those options deliberately rather than treating the most conservative option as the default.
+For Soar, the design conversation can focus on choices such as:
 
-A Soar implementation of the pattern could focus on:
+```text
+Production-centered expression:
+  aggregation, reconstruction, and candidate generation are expressed through
+  productions or external mechanisms.
+
+Explicit memory-side support:
+  semantic-memory commands make dimension and identity explicit;
+  lineage is captured from working-memory traces;
+  aggregation or Expand can be enabled under explicit scope.
+```
+
+A Soar application of the pattern could focus on:
 
 ```text
 1. explicit dimension and identity in semantic-memory commands
@@ -157,16 +194,32 @@ In this setting, several SAFER concepts map naturally onto Soar:
 |---|---|
 | Source | Working memory is already the source. |
 | Anchor | A semantic-memory command saves selected WM structures under explicit dimension and identity. |
-| Factor | Productions perform domain-specific decomposition; memory captures trace links among anchored elements. |
-| Refine | Productions assign categories or labels; semantic memory stores them as retrieval and aggregation scopes. |
+| Factor | Productions perform domain-specific decomposition; memory may capture trace links among anchored elements. |
+| Refine | Productions assign categories or labels; semantic memory may store them as retrieval and aggregation scopes. |
 | Expand | Semantic memory may expose candidate generation over dimension-scoped memories. |
 | Aggregation | Semantic memory may maintain statistical summaries over identity-linked, lineage-preserving traces. |
 
-This framing respects Soar's generality. Soar can already represent rich symbolic structures and connect to non-symbolic modules. SAFER clarifies a possible memory-side extension point: whether dimension-scoped aggregation and candidate generation should remain external/manual, or become explicit semantic-memory capabilities under Soar's existing control architecture.
+This framing keeps Soar's existing architecture central. SAFER provides names for the semantic-memory options around that architecture, including dimension-aware anchoring, trace-based aggregation, and Expand-style generation.
+
+## Soar as Control for Semantic Data Applications
+
+A separate but natural application is to use Soar as the control layer over a SAFER-style semantic data runtime. In this architecture, Soar does not need to turn semantic memory into a full data backend, and the data runtime does not need to own the agent's control logic.
+
+The responsibilities can be separated as:
+
+```text
+Soar control layer:
+  goals, operators, attention, decomposition, categorization, decisions to query or commit
+
+SAFER semantic data runtime:
+  dimension-scoped keyed update, lineage, aggregation, materialization, persistence, expansion
+```
+
+This is the implicit combination between cognitive architecture and data infrastructure. Soar supplies the active reasoning loop. SAFER supplies the disciplined state-evolution substrate for larger semantic data applications.
 
 ## Aggregation and Expand
 
-Current semantic memory systems can often simulate dimensions, identities, and nested categorizations as ordinary symbolic attributes. The representational problem is usually not the central issue.
+In a cognitive architecture such as Soar, semantic memory can often represent dimensions, identities, and nested categorizations as ordinary symbolic attributes. The design question is therefore not mainly representational; it is how much of the following behavior should remain expressed through productions and external modules, and how much should become explicit memory-side support.
 
 The main design question is operational:
 
@@ -200,7 +253,7 @@ Aggregation is mostly a hidden semantic-memory effect of making dimension, ident
 
 ### Expand as candidate generation
 
-Traditional semantic memory is mostly cue-based retrieval:
+In the Soar-style setting, semantic memory is commonly used through cue-based retrieval:
 
 ```text
 Given a cue, retrieve matching memory.
@@ -221,7 +274,7 @@ within the stacking-task scope
 where the bottom block is likely denser than the top block.
 ```
 
-Productions or higher-level control still decide whether a generated candidate is meaningful, valid, or worth anchoring. But memory can provide the candidate space.
+In a Soar implementation, productions or higher-level control decide whether a generated candidate is meaningful, valid, or worth anchoring. In a dataflow implementation, the same operation can be compiled into joins, products, or candidate-generation stages.
 
 ## Known Functions and Semantic Reconstruction
 
@@ -344,7 +397,7 @@ This is especially relevant for systems that need to accumulate and reason over 
 - data and ML platforms with evolving semantic models
 - hybrid symbolic-statistical systems
 
-The practical significance is not that systems have never performed keyed update, aggregation, or retrieval. They have. The significance is that these operations are usually scattered across backend conventions and application-specific code. SAFER gives them a shared semantic vocabulary and makes the consequences — aggregation, refinement, expansion, and compositional reuse — explicit.
+For data applications, the practical significance is that keyed update, aggregation, lineage, and retrieval can be described using one shared semantic vocabulary instead of being spread across backend conventions and application-specific code. For Soar-style cognitive architectures, the same vocabulary clarifies which capabilities remain naturally expressed through working memory, productions, episodic memory, semantic memory, or external modules, and which additional memory-side options are worth making explicit.
 
 ## Current Status
 
@@ -364,7 +417,7 @@ Planned additions include:
 - persistence abstraction
 - additional examples for scientific discovery and AI memory systems
 
-Soar may become a separate reference implementation of the same pattern inside the Soar code base, using Soar's native control and memory mechanisms and making any additional semantic-memory commitments explicit.
+Soar may become a separate reference implementation of the same pattern inside the Soar code base, using Soar's native control and memory mechanisms. A complementary path is a hybrid application in which Soar provides the control layer while a SAFER-style runtime maintains external semantic state for data-intensive memory, aggregation, and persistence.
 
 ## Talks
 
@@ -379,6 +432,7 @@ Control / Agent Layer
   - task policy
   - automation
   - exploration strategy
+  - optional Soar-based control over semantic data applications
 
 Semantic Layer
   - dimensions
@@ -425,4 +479,4 @@ function-aware reconstruction through declared semantic schemas
 incremental maintenance of compositional semantic state
 ```
 
-This explains why SAFER is useful even though many systems already perform keyed updates informally. SAFER gives those updates a shared semantic vocabulary and makes the consequences — aggregation, refinement, expansion, and compositional reuse — explicit.
+In data applications, SAFER gives keyed updates a shared semantic vocabulary and connects them to aggregation, refinement, expansion, and compositional reuse. In Soar-native semantic memory, SAFER provides a way to discuss the same operations as explicit architectural choices around memory commands, retrieval, trace capture, aggregation, and generation. In hybrid applications, Soar can provide the control layer while a SAFER-style runtime maintains governed semantic state outside the cognitive core.
