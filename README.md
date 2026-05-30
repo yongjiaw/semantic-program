@@ -106,6 +106,15 @@ In data applications, this contract keeps meaning and lineage from being split a
 
 For instance-oriented memory designs, the same contract clarifies how stored experiences become accumulated semantic state. Instance memory can store many experiences; dimension, identity, and lineage specify how those experiences participate in aggregation, retrieval scope, and compositional reuse.
 
+## Learning as Semantic Commitment
+
+Learning requires semantic commitment: deciding what an observation is about, what identity it updates, what evidence it should be reconciled with, and what derived state should be trusted for future use. These decisions can be wrong or lossy, but they are also what make memory reusable.
+
+The conservative choice is to defer interpretation until query time. This preserves evidence and flexibility, but it can repeatedly push the same work into retrieval, reconstruction, aggregation, policy evaluation, and downstream reasoning. The engineering world often makes earlier commitments under scalability pressure: materialized views, feature stores, indexes, caches, stateful stream processors, data warehouses, and microservices all maintain derived state before query time.
+
+Neither choice is universally correct. The important design question is where semantic commitment should happen under a given set of constraints. Semantic Program makes that choice more explicit and flexible by separating evidence, identity, lineage, update policy, aggregation, and derived state. The goal is not to avoid mistakes, but to make committed learning inspectable, correctible, and governed by explicit semantic structure.
+
+
 ## Design Spectrum: Soar, Data Applications, and Hybrid Control
 
 SAFER provides a shared vocabulary for systems that make different architectural commitments around memory, update, reasoning, and execution. The same algebra can be applied in several settings.
