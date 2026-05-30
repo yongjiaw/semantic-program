@@ -135,19 +135,19 @@ This version can be opinionated because data applications already need governed 
 
 ## Relationship to Soar
 
-Soar is an important reference point because it already has a committed computational architecture: working memory, production rules, semantic memory, episodic memory, and external modules.
+Soar is an important reference point because it already has a mature and deliberate computational architecture: working memory, production rules, semantic memory, episodic memory, and external modules. Soar's design keeps domain reasoning and control in working memory and productions, and avoids placing implicit computation or reasoning inside long-term memory. That conservative boundary is a strength of the architecture.
 
-That makes Soar a distinct application of the SAFER pattern, not a default runtime target or a subordinate binding. A Soar implementation should live in the Soar code base and use Soar's native control mechanisms.
+SAFER should therefore be understood as a distinct application pattern for Soar, not a default runtime target or a subordinate binding. A Soar implementation should live in the Soar code base and use Soar's native control mechanisms.
 
-The key point is that Soar productions remain the domain reasoning engine. Productions decide what structures exist, how objects decompose, which categories apply, when functions are used, and what should be saved. Semantic memory should not become a hidden domain reasoner.
+The role of SAFER is to make the architectural tradeoff explicit. If semantic memory avoids aggregation, candidate generation, or other implicit computation, the system preserves a clean and general control model. The tradeoff is that some forms of learned semantic abstraction must be implemented manually through productions or external mechanisms. SAFER provides a vocabulary for evaluating those options deliberately rather than treating the most conservative option as the default.
 
-A conservative Soar implementation of the pattern would likely focus on:
+A Soar implementation of the pattern could focus on:
 
 ```text
 1. explicit dimension and identity in semantic-memory commands
 2. automatic working-memory trace capture among anchored structures
-3. scope-aware aggregation and associative learning
-4. retrieval augmented by learned associations
+3. optional scope-aware aggregation and associative learning
+4. retrieval augmented by learned associations when enabled
 5. Expand-style candidate generation over stored dimensions
 ```
 
@@ -159,16 +159,16 @@ In this setting, several SAFER concepts map naturally onto Soar:
 | Anchor | A semantic-memory command saves selected WM structures under explicit dimension and identity. |
 | Factor | Productions perform domain-specific decomposition; memory captures trace links among anchored elements. |
 | Refine | Productions assign categories or labels; semantic memory stores them as retrieval and aggregation scopes. |
-| Expand | Semantic memory exposes candidate generation over dimension-scoped memories. |
-| Aggregation | Semantic memory maintains statistical summaries over identity-linked, lineage-preserving traces. |
+| Expand | Semantic memory may expose candidate generation over dimension-scoped memories. |
+| Aggregation | Semantic memory may maintain statistical summaries over identity-linked, lineage-preserving traces. |
 
-This respects Soar's generality. Soar can already represent rich symbolic structures and connect to non-symbolic modules. The proposed value is not multimodality or replacing productions. The value is making certain memory-side operations first-class: scope-aware aggregation and candidate generation.
+This framing respects Soar's generality. Soar can already represent rich symbolic structures and connect to non-symbolic modules. SAFER clarifies a possible memory-side extension point: whether dimension-scoped aggregation and candidate generation should remain external/manual, or become explicit semantic-memory capabilities under Soar's existing control architecture.
 
 ## Aggregation and Expand
 
-Current semantic memory systems can often simulate dimensions, identities, and nested categorizations as ordinary symbolic attributes. The representational problem is not the main gap.
+Current semantic memory systems can often simulate dimensions, identities, and nested categorizations as ordinary symbolic attributes. The representational problem is usually not the central issue.
 
-The missing capabilities are operational:
+The main design question is operational:
 
 ```text
 1. scope-aware aggregation
@@ -260,7 +260,7 @@ Weight = heavy
   inputs = Size, Density
 ```
 
-This supports reconstruction, explanation, and residual/error learning without turning memory into a hidden domain computation engine.
+This supports reconstruction, explanation, and residual/error learning while preserving the architectural boundary between memory representation and active control.
 
 ## Predictive Compression
 
@@ -364,7 +364,7 @@ Planned additions include:
 - persistence abstraction
 - additional examples for scientific discovery and AI memory systems
 
-Soar may become a separate reference implementation of the same pattern inside the Soar code base, using Soar's native control and memory mechanisms.
+Soar may become a separate reference implementation of the same pattern inside the Soar code base, using Soar's native control and memory mechanisms and making any additional semantic-memory commitments explicit.
 
 ## Talks
 
