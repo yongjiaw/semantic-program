@@ -4,15 +4,14 @@ Semantic Program is a framework for building compositional memory and evolving s
 
 The central thesis is:
 
-> A small algebra of semantic state transitions can turn streams of experience into compositional, queryable, and scalable memory.
+> A small algebra of semantic state transitions can turn streams of experience into compositional, queryable, scalable, and incrementally maintainable memory.
 
 Instead of treating long-term memory as a passive store of past instances, Semantic Program models memory as evolving semantic state: structured, anchored, transformed, queried, compressed, and extended through reusable computation.
 
 The framework connects two traditions:
 
 - **Agent memory and cognitive architectures:** semantic memory, episodic memory, production systems, query-driven reasoning, and agents that accumulate observations and evolve structured knowledge over time.
-
-- **Distributed computation and storage systems:** scalable, generic containers for computation, retrieval, and persistence, including dataflow, stream/batch processing, key-value stores, and query engines.
+- **Distributed computation and storage systems:** scalable, generic infrastructure for computation, retrieval, keyed update, lineage, aggregation, and persistence, including dataflow, stream/batch processing, key-value stores, and query engines.
 
 ## Motivation
 
@@ -20,50 +19,11 @@ Modern autonomous systems increasingly need memory that is more structured than 
 
 A scientific discovery agent, for example, should not merely retrieve past experiments. It should be able to ingest observations, anchor them to stable semantic dimensions, decompose observations into reusable parts, compose new candidate states and hypotheses, refine memory into meaningful categories, and query, persist, compress, and replay learned structure.
 
-Semantic Program explores this problem through a compositional architecture for memory, computation, and query.
-
-## Scope Clarification: Two Related Problems
-
-Semantic Program is motivated by two related but different problems. They share principles — semantic memory, agent control, structured learning, and compositional state evolution — but they have different runtimes and engineering constraints.
-
-### 1. Semantic Control for Data Engineering Systems
-
-The first problem is an industry/data-engineering problem:
-
-> How can a data pipeline safely evolve based on semantic-level knowledge, policies, constraints, lineage, and feedback, with increasing autonomy and minimal human intervention?
-
-In this setting, a Soar-like agent can serve as the control and semantic reasoning layer. It reasons about schemas, dependencies, policies, ownership, lineage, quality, operational constraints, and safe evolution. The actual data pipeline runtime is external: Spark, Flink, Beam, Kafka, databases, orchestration systems, cloud data platforms, or other execution environments.
-
-This problem has significant practical value because current industry systems still rely heavily on manual intervention for semantic data evolution, migration, validation, governance, and pipeline adaptation.
-
-### 2. Extending Soar Semantic Memory Learning
-
-The second problem is specifically about Soar:
-
-> How can Soar's built-in semantic memory support richer semantic learning while preserving Soar's architectural commitments?
-
-In this setting, the runtime is Soar itself: production rules, working memory, Rete matching, semantic memory, and local architectural storage. This imposes different constraints, especially around real-time behavior, architectural generality, and keeping productions and working memory in control.
-
-The goal is not to add hidden background reasoning. The architecture should provide generic, syntactic mechanisms. Productions and working memory should still determine when those mechanisms are used and what structures make them meaningful.
-
-For example, dimension and identity may provide the precondition for generic architectural reconciliation: when productions create a contribution with a dimension and a deterministically computed identity, the architecture can know when merge, aggregation, or statistical learning outside working memory is well-defined.
-
-### Relationship
-
-These two problems are connected, but they should not be collapsed.
-
-The broader SAFER framework applies to both: semantic dimensions, identity, anchoring, factoring, expansion, refinement, lineage, and controlled memory evolution.
-
-However, the implementation commitments differ:
-
-- In the data-engineering problem, SAFER can use external scalable runtimes and persistence systems.
-- In the Soar problem, SAFER must fit within Soar's production/working-memory/semantic-memory architecture and respect its real-time and architectural constraints.
-
-Keeping this distinction explicit helps keep discussions properly scoped.
+Semantic Program explores this problem through a compositional architecture for memory, computation, update, and query.
 
 ## Core Idea
 
-Semantic Program organizes memory around semantic dimensions.
+Semantic Program organizes memory around **semantic dimensions**.
 
 Examples include:
 
@@ -80,74 +40,240 @@ Examples include:
 
 Each dimension owns or participates in structured state. State evolves through explicit semantic transitions rather than through unstructured accumulation alone.
 
-This makes memory compositional, queryable, inspectable, scalable, and compatible with AI agents. Symbolic handles can coexist with learned representations, statistical models, and dataflow computation.
+The minimal framework commitment is:
+
+```text
+dimension + identity + lineage + keyed update
+```
+
+This contract is intentionally small. It says that durable semantic updates should be dimension-scoped, identity-keyed, lineage-preserving, and incrementally maintainable.
+
+Many systems already perform keyed updates: user profiles, entity stores, feature stores, knowledge graphs, semantic memory systems, CDC pipelines, event-sourced applications, and stateful stream processors. The problem is that the semantic meaning of the update is usually buried in custom backend conventions or application code:
+
+```text
+What dimension is being updated?
+What identity system does the key belong to?
+Is the value observed, inferred, predicted, derived, or corrected?
+What source or trace produced it?
+Which aggregation scope should it affect?
+Which downstream compositions should it update, invalidate, or expand?
+```
+
+Semantic Program makes this hidden contract explicit.
 
 ## [SAFER](SAFER.md) Algebra
 
-The current formulation is organized around five core semantic state transition operators:
+The current formulation is organized around five semantic state transition operators:
 
 | Operator | Purpose | Example |
 |---|---|---|
-| Source | Introduce external observations as computation | Observed stack episodes become Compute(Stack) |
-| Anchor | Consolidate computation into dimension-anchored memory | Merge and persist stack observations as Memory(Stack) |
-| Factor | Decompose one dimension into component dimensions | Stack -> top Block, bottom Block |
-| Expand | Compose across dimensions to form new candidate state | Block + Block -> imagined Stack |
-| Refine | Split memory into exclusive categories | Stack -> Stable / Unstable, Observed / Imagined |
+| Source | Introduce evidence, observations, or external computation | Observed stack episodes become Compute(Stack) |
+| Anchor | Commit evidence into dimension-scoped, identity-keyed semantic state | Merge and persist stack observations as Memory(Stack) |
+| Factor | Decompose one dimension into component dimensions while preserving lineage | Stack -> top Block, bottom Block |
+| Expand | Generate candidate compositions over keyed dimensions | Block + Block -> imagined Stack |
+| Refine | Split memory into exclusive categories or retrieval scopes | Stack -> Stable / Unstable, Observed / Imagined |
 
 SAFER is intended to be small enough to reason about, but expressive enough to describe how structured memory evolves over time.
 
-## Dataflow Bridge
+A useful interpretation is:
+
+```text
+Source  - where evidence originates
+Anchor  - how evidence becomes keyed semantic state
+Factor  - how structure is decomposed while preserving lineage
+Expand  - how stored dimensions generate candidate compositions
+Refine  - how memory is partitioned into explicit scopes and categories
+```
+
+SAFER is not merely a query model. It is an algebra of **semantic state evolution**. Relational algebra and SQL are excellent for querying already-formed relations, but they do not provide a first-class semantic model of keyed update. SQL has `INSERT`, `UPDATE`, and `MERGE`, but identity resolution, provenance, source status, aggregation impact, category scope, and downstream semantic consequences remain outside the language.
+
+## Anchor as Keyed Semantic Update
+
+Anchor is the operation that turns evidence into accumulated semantic state.
+
+An Anchor operation should make explicit:
+
+```text
+dimension:    what kind of semantic state is being updated?
+identity:     which durable semantic object is this about?
+value:        what observation, structure, category, or derivation is being committed?
+lineage:      where did this contribution come from?
+status:       observed, inferred, predicted, derived, corrected, hypothetical?
+policy:       replace, merge, accumulate, decay, version, aggregate, or reconcile?
+```
+
+Without this contract, meaning and lineage are scattered across schemas, storage backends, and custom application logic. With this contract, aggregation, retrieval, expansion, and explanation can be implemented generically above different storage engines.
+
+This is one of the main differences between Semantic Program and instance-based memory. Instance memory can store many experiences, but without dimension, identity, and lineage, it does not naturally support principled semantic aggregation or compositional reuse.
+
+## Dataflow Interpretation
 
 Semantic operators do not replace dataflow systems. They sit above them.
 
 A Semantic Program describes what a memory transition means. A dataflow runtime provides how it executes.
 
-Typical execution primitives include:
-
-- map
-- reduce
-- join
-- split
-- union
-- persist
-- retrieve
-
-The semantic operators can be interpreted through these lower-level operations:
-
 | Semantic operator | Dataflow interpretation |
 |---|---|
 | Source | Create keyed computation from external input |
-| Anchor | Union, reduce, enrich, and persist |
-| Factor | Map or decompose from one dimension to another |
-| Expand | Join and compose across dimensions |
-| Refine | Split or categorize into exclusive memory partitions |
+| Anchor | Union, reduce, enrich, reconcile, and persist keyed semantic state |
+| Factor | Map or decompose from one dimension to another while preserving lineage |
+| Expand | Join, product, candidate generation, and composition across dimensions |
+| Refine | Split, categorize, or partition into exclusive memory scopes |
 
-This allows the same semantic formulation to be implemented over local execution, key-value stores, Spark, Flink, Beam, or other distributed runtimes.
+In a dataflow framework, SAFER can be implemented directly as a runtime discipline:
+
+```text
+all updates declare dimension and identity
+all transformations preserve lineage
+all materializations are keyed semantic updates
+aggregation is incrementally maintained
+refinement creates explicit category scopes
+expand generates candidate compositions
+```
+
+This version can be opinionated because data applications already need governed state evolution, lineage, aggregation, and consistency.
 
 ## Relationship to Soar
 
-The initial motivating context is integration with the Soar cognitive architecture.
+Soar is an important reference point because it already has a committed computational architecture: working memory, production rules, semantic memory, episodic memory, and external modules.
 
-Soar provides a strong model of symbolic working memory, production rules, episodic memory, and semantic memory. Semantic Program explores how this can be expressed in a Soar-native way while also remaining useful as a broader framework for semantic state evolution.
+That makes Soar a distinct application of the SAFER pattern, not a default runtime target or a subordinate binding. A Soar implementation should live in the Soar code base and use Soar's native control mechanisms.
 
-For Soar specifically, many SAFER-style operations can be prototyped with existing `smem` mechanisms:
+The key point is that Soar productions remain the domain reasoning engine. Productions decide what structures exist, how objects decompose, which categories apply, when functions are used, and what should be saved. Semantic memory should not become a hidden domain reasoner.
 
-- Forward dependency navigation can be represented as retrieval.
-- Backward navigation can use cue/activation-based retrieval when it is dimension-scoped.
-- Categorization/refinement can be represented as ordinary symbolic attributes with reserved meanings.
-- Current `smem` can be viewed roughly as the special case where the semantic store is one global dimension and each object has its own LTI identity.
+A conservative Soar implementation of the pattern would likely focus on:
 
-The main additional commitment is making dimension and identity first-class so storage can trigger anchored reconciliation rather than creating unrelated LTIs. This connects to the idea that some learning can happen outside working memory while still keeping productions and working memory in control. The architecture would provide generic syntactic reconciliation or aggregation once productions have created the dimension, identity, and contribution structure that make the operation well-defined.
+```text
+1. explicit dimension and identity in semantic-memory commands
+2. automatic working-memory trace capture among anchored structures
+3. scope-aware aggregation and associative learning
+4. retrieval augmented by learned associations
+5. Expand-style candidate generation over stored dimensions
+```
 
-The goal is not to replace production rules or symbolic reasoning. The goal is to give agent memory richer computational support:
+In this setting, several SAFER concepts map naturally onto Soar:
 
-- learned regularities over experience
-- structured abstractions over semantic dimensions
-- compositional retrieval beyond instance matching
-- explicit lineage from observations to derived memory
-- symbolic handles grounded in dataflow and learned representations
+| SAFER concept | Soar interpretation |
+|---|---|
+| Source | Working memory is already the source. |
+| Anchor | A semantic-memory command saves selected WM structures under explicit dimension and identity. |
+| Factor | Productions perform domain-specific decomposition; memory captures trace links among anchored elements. |
+| Refine | Productions assign categories or labels; semantic memory stores them as retrieval and aggregation scopes. |
+| Expand | Semantic memory exposes candidate generation over dimension-scoped memories. |
+| Aggregation | Semantic memory maintains statistical summaries over identity-linked, lineage-preserving traces. |
 
-The first prototype examples use a blocks-world-style domain involving stacks, blocks, colors, sizes, weight, and stability.
+This respects Soar's generality. Soar can already represent rich symbolic structures and connect to non-symbolic modules. The proposed value is not multimodality or replacing productions. The value is making certain memory-side operations first-class: scope-aware aggregation and candidate generation.
+
+## Aggregation and Expand
+
+Current semantic memory systems can often simulate dimensions, identities, and nested categorizations as ordinary symbolic attributes. The representational problem is not the main gap.
+
+The missing capabilities are operational:
+
+```text
+1. scope-aware aggregation
+2. generative expansion
+```
+
+### Scope-aware aggregation
+
+If observations are anchored with dimension, identity, category, and lineage, semantic memory can learn statistical associations over the resulting traces.
+
+For example:
+
+```text
+Block b1: Color = red,  Density = high
+Block b2: Color = red,  Density = high
+Block b3: Color = blue, Density = low
+```
+
+The memory system can learn:
+
+```text
+Within Block:
+  Color = red predicts Density = high
+```
+
+The trace defines the candidate evidence structure. Statistical learning decides which associations are promoted. The system should not mechanically return every co-traced property; it should promote only statistically supported associations, with support, confidence, and provenance.
+
+Aggregation is mostly a hidden semantic-memory effect of making dimension, identity, categorization, and lineage explicit.
+
+### Expand as candidate generation
+
+Traditional semantic memory is mostly cue-based retrieval:
+
+```text
+Given a cue, retrieve matching memory.
+```
+
+Expand adds a complementary operation:
+
+```text
+Given dimensions, roles, scopes, and constraints,
+generate candidate combinations.
+```
+
+For example:
+
+```text
+Generate candidate block pairs
+within the stacking-task scope
+where the bottom block is likely denser than the top block.
+```
+
+Productions or higher-level control still decide whether a generated candidate is meaningful, valid, or worth anchoring. But memory can provide the candidate space.
+
+## Known Functions and Semantic Reconstruction
+
+Aggregation learns associations, but some reconstruction requires known functional relationships.
+
+For example:
+
+```text
+Weight = Size × Density
+```
+
+The goal is not for semantic memory to learn arbitrary functions. A practical design is to let semantic memory store **semantic function schemas**, while productions, RHS functions, or external modules perform the actual computation.
+
+A function schema records:
+
+```text
+Function: block-weight-relation
+Scope:    Block
+Variables: Size, Density, Weight
+Relation:  Weight = Size × Density
+
+Supported derivations:
+  Size + Density    -> Weight
+  Weight + Size     -> Density
+  Weight + Density  -> Size
+```
+
+Semantic memory stores the signature and applicability. Productions match the schema, bind available inputs, invoke the computation through normal mechanisms, and optionally anchor the derived result back into semantic memory with provenance.
+
+Derived values should be marked differently from observed values:
+
+```text
+Weight = heavy
+  status = derived
+  derived-by = block-weight-relation
+  inputs = Size, Density
+```
+
+This supports reconstruction, explanation, and residual/error learning without turning memory into a hidden domain computation engine.
+
+## Predictive Compression
+
+The broader framework can be interpreted as a form of predictive compression:
+
+```text
+observations + lineage -> learned summaries + residuals
+partial cue + learned summaries + functions -> reconstructed or augmented candidate state
+```
+
+The conservative starting point is identity-scoped statistical aggregation. Repeated trace patterns are compressed into learned associations with support and confidence, while exceptions remain available through episodic traces or residual evidence.
+
+Arbitrary dimension-level predictive models may be useful in broader applications, but they should be treated as extension points rather than core SAFER primitives.
 
 ## Example: Blocks and Stack Stability
 
@@ -170,10 +296,35 @@ Block
   -> Color
   -> Size
   -> Weight
+  -> Density
 
 Stack
   -> Stable / Unstable
   -> Observed / Imagined
+```
+
+The domain runtime decides how to decompose and categorize the situation. Anchor commits selected structures under explicit dimensions and identities, while lineage records how the pieces are connected.
+
+Over many examples, memory can learn:
+
+```text
+Within Block:
+  Color = red predicts Density = high
+```
+
+If a known function schema declares:
+
+```text
+Weight = Size × Density
+```
+
+then retrieval or expansion can combine:
+
+```text
+known:        Size = large
+learned:      Color = red -> Density = high
+function:     Size × Density -> Weight
+reconstruct:  Weight = heavy
 ```
 
 This example is intentionally simple. The purpose is to show how memory can evolve from experienced instances into reusable semantic state.
@@ -193,6 +344,8 @@ This is especially relevant for systems that need to accumulate and reason over 
 - data and ML platforms with evolving semantic models
 - hybrid symbolic-statistical systems
 
+The practical significance is not that systems have never performed keyed update, aggregation, or retrieval. They have. The significance is that these operations are usually scattered across backend conventions and application-specific code. SAFER gives them a shared semantic vocabulary and makes the consequences — aggregation, refinement, expansion, and compositional reuse — explicit.
+
 ## Current Status
 
 This repository is an early research workspace.
@@ -209,8 +362,9 @@ Planned additions include:
 - blocks-world example domain
 - local dataflow runtime
 - persistence abstraction
-- Soar integration examples
 - additional examples for scientific discovery and AI memory systems
+
+Soar may become a separate reference implementation of the same pattern inside the Soar code base, using Soar's native control and memory mechanisms.
 
 ## Talks
 
@@ -233,6 +387,9 @@ Semantic Layer
   - representations
   - SAFER operators
   - lineage
+  - aggregation
+  - expansion
+  - semantic function schemas
 
 Bridging Layer
   - compilation from semantic operators to dataflow programs
@@ -247,3 +404,25 @@ Generic Infrastructure
 ```
 
 The long-term goal is a framework where memory, computation, query, persistence, compression, and learning can be defined compositionally.
+
+## Summary
+
+SAFER’s core contribution is the explicit modeling of semantic state evolution.
+
+The minimal framework contract is simple:
+
+```text
+dimension + identity + lineage + keyed update
+```
+
+This contract enables stronger operations:
+
+```text
+aggregation over explicit semantic scopes
+retrieval augmented by learned associations
+candidate generation over stored dimensions
+function-aware reconstruction through declared semantic schemas
+incremental maintenance of compositional semantic state
+```
+
+This explains why SAFER is useful even though many systems already perform keyed updates informally. SAFER gives those updates a shared semantic vocabulary and makes the consequences — aggregation, refinement, expansion, and compositional reuse — explicit.
