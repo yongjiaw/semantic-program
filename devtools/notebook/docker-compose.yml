@@ -1,0 +1,17 @@
+# Simple setup using pre-built Almond image
+version: '3.8'
+
+services:
+  almond-notebook:
+    build: .
+    container_name: almond-scala
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../../examples/notebooks:/home/jovyan/work
+      - ../../../Soar:/home/jovyan/Soar
+      - ~/.m2:/home/jovyan/.m2
+    environment:
+      - JUPYTER_TOKEN=scala-notebook-token
+      - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+    command: start-notebook.sh --NotebookApp.token='scala-notebook-token' --NotebookApp.password=''
