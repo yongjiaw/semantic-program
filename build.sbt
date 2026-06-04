@@ -7,6 +7,7 @@ lazy val root = (project in file("."))
     name := "CognitiveKernel",
     libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "3.2.18" % Test),
     Test / testOptions += Tests.Argument("-oD"),
-    // Soar SML JARs (unmanaged, copied to lib/)
-    Compile / unmanagedJars += Attributed.blank(file("../Soar/out/java/sml.jar"))
+    // Soar SML JARs (unmanaged, copied to lib/), currently there is no mvn release
+    // the following will work with local build and breaks CCI
+    // Compile / unmanagedJars += Attributed.blank(file("../Soar/out/java/sml.jar"))
   )

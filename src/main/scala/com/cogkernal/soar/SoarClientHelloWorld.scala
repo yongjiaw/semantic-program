@@ -15,7 +15,7 @@ import java.io.File
 object SoarClientHelloWorld:
 
   def main(args: Array[String]): Unit =
-
+    // this needs to be built locally
     System.load(new File("../Soar/out/libJava_sml_ClientInterface.jnilib").getAbsolutePath)
 
     println(System.getProperty("java.library.path"))
