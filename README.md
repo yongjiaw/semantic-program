@@ -48,18 +48,24 @@ dimension + identity + lineage + keyed update
 
 This contract is intentionally small. It says that durable semantic updates should be dimension-scoped, identity-keyed, lineage-preserving, and incrementally maintainable.
 
-In data applications, keyed updates are already common: user profiles, entity stores, feature stores, knowledge graphs, CDC pipelines, event-sourced applications, and stateful stream processors all maintain state by identity. In those settings, the semantic meaning of the update is often distributed across backend conventions, schemas, pipeline code, and application logic:
+In data applications, keyed updates are already common: user profiles, entity stores, feature stores, knowledge graphs, CDC pipelines, event-sourced applications, and stateful stream processors all maintain state by identity. Many systems also enforce local policies, domain rules, schemas, validation logic, lineage conventions, and aggregation behavior.
+
+The harder problem is end-to-end automation across domains. In real systems, the semantic and operational meaning of an update is often distributed across backend conventions, schemas, pipeline code, orchestration rules, data contracts, catalogs, versioning systems, retention policies, and application logic:
 
 ```text
 What dimension is being updated?
 What identity system does the key belong to?
 Is the value observed, inferred, predicted, derived, or corrected?
 What source or trace produced it?
+Which policy decides whether the update is automatic, reviewed, blocked, or rolled back?
+Which schema version does it belong to?
+How should rollback, replay, retention, and expiration work?
 Which aggregation scope should it affect?
 Which downstream compositions should it update, invalidate, or expand?
+Which domain owns the decision, and how does it compose with other domains?
 ```
 
-Semantic Program makes this update contract explicit for data applications, and provides a vocabulary for deciding which parts of the same contract should be exposed in cognitive architectures such as Soar.
+Semantic Program makes this update contract explicit so that control policies can operate across heterogeneous domains and runtimes. The goal is not to replace domain-specific logic or remove human judgment, but to make semantic and operational commitments governable and composable through a unified control plane. Human intervention is one possible policy outcome: some changes may be automatic, some may require approval, some may request review, and some may be blocked or rolled back.
 
 ## [SAFER](SAFER.md) Algebra
 
@@ -110,36 +116,41 @@ For instance-oriented memory designs, the same contract clarifies how stored exp
 
 Learning requires semantic commitment: deciding what an observation is about, what identity it updates, what evidence it should be reconciled with, and what derived state should be trusted for future use. These decisions can be wrong or lossy, but they are also what make memory reusable.
 
-The conservative choice is to defer interpretation until query time. This preserves evidence and flexibility, but it can repeatedly push the same work into retrieval, reconstruction, aggregation, policy evaluation, and downstream reasoning. The engineering world often makes earlier commitments under scalability pressure: materialized views, feature stores, indexes, caches, stateful stream processors, data warehouses, and microservices all maintain derived state before query time.
+The conservative choice is to defer interpretation until query time. This preserves evidence and flexibility, but it can repeatedly push the same work into retrieval, reconstruction, aggregation, policy evaluation, and downstream reasoning. Engineering systems often make earlier commitments under scalability pressure: materialized views, feature stores, indexes, caches, stateful stream processors, data warehouses, and microservices all maintain derived state before query time.
 
-Neither choice is universally correct. The important design question is where semantic commitment should happen under a given set of constraints. Semantic Program makes that choice more explicit and flexible by separating evidence, identity, lineage, update policy, aggregation, and derived state. The goal is not to avoid mistakes, but to make committed learning inspectable, correctible, and governed by explicit semantic structure.
+Neither choice is universally correct. The important design question is where semantic commitment should happen under a given set of constraints, and under which control policy. Human approval, review, escalation, blocking, rollback, and retention are part of that policy, not exceptions to it. Semantic Program makes these choices explicit by separating evidence, identity, lineage, update policy, aggregation, derived state, and operational semantics such as schema evolution, versioning, rollback, replay, and retention.
 
 
 ## Design Spectrum: Soar, Data Applications, and Hybrid Control
 
 SAFER provides a shared vocabulary for systems that make different architectural commitments around memory, update, reasoning, and execution. The same algebra can be applied in several settings.
 
-In **data applications**, the focus is scalable state maintenance: keyed updates, aggregation, joins, lineage tracking, materialization, and persistence. SAFER can provide a semantic contract so that dimensions, identities, lineage, and update meaning are preserved across pipelines and storage systems.
+In **data applications**, the focus is end-to-end semantic automation over scalable state maintenance: keyed updates, aggregation, joins, lineage tracking, materialization, persistence, validation, schema evolution, version control, rollback, replay, retention, and downstream invalidation. Individual domains can already implement custom policies and domain logic. The harder challenge is coordinating those semantic and operational commitments across many domains through a unified control plane so that policy, identity, lineage, aggregation, lifecycle, human review, and downstream effects remain explicit and composable.
 
 In **Soar-native semantic memory**, the focus is cognitive control. Soar places active reasoning in working memory and productions, with semantic memory, episodic memory, and external modules supporting that control loop. SAFER can clarify which semantic-memory capabilities are naturally expressed through Soar's native mechanisms and which additional memory-side options, such as dimension-aware anchoring, trace-aware aggregation, or Expand-style generation, may be worth making explicit.
 
-A third setting is the **hybrid application**: Soar can serve as the control layer for a semantic data application. In this pattern, Soar decides goals, operators, attention, decomposition, categorization, and when to commit or query memory. A SAFER-style data runtime maintains the external semantic state: keyed updates, lineage, aggregation, persistence, and candidate generation over larger data collections.
+A third setting is the **hybrid application**: Soar can serve as the control layer for a semantic data application. In this pattern, Soar decides goals, operators, attention, decomposition, categorization, policies, and when to commit, query, escalate, or request human review. A SAFER-style data runtime maintains the external semantic state: keyed updates, lineage, aggregation, persistence, lifecycle policy, and candidate generation over larger data collections. This separates autonomous control from scalable state maintenance.
 
 ```text
 Data-application runtime:
   scalable keyed update, materialization, aggregation, lineage, persistence
 
+Data-application control plane:
+  cross-domain policy, ownership, validation, schema evolution, versioning,
+  rollback, replay, retention, human review, commitment, invalidation, automation
+
 Soar-native memory extension:
   production-centered control with explicit semantic-memory options
 
 Soar-controlled semantic data application:
-  Soar controls task reasoning; SAFER runtime maintains governed semantic state
+  Soar controls task reasoning and policy; SAFER runtime maintains governed semantic state
 
 SAFER:
-  shared vocabulary for dimension, identity, lineage, aggregation, and expansion
+  shared vocabulary for dimension, identity, lineage, aggregation, expansion,
+  lifecycle, and control
 ```
 
-This spectrum is useful because it separates control choices from state-maintenance choices. Soar can remain the native control architecture while a SAFER data runtime provides disciplined semantic state evolution for applications that need scalable memory, aggregation, and persistence.
+This spectrum is useful because it separates control choices from state-maintenance choices. For data applications, the main contribution is a unified semantic control plane for end-to-end automation across domains, including operational semantics such as schema evolution, versioning, rollback, replay, retention, human review, and downstream invalidation. For Soar, the same vocabulary clarifies which commitments should remain under production-centered control and which memory-side options may be useful. In hybrid systems, Soar can remain the control architecture while a SAFER data runtime provides disciplined semantic state evolution for applications that need scalable memory, aggregation, and persistence.
 
 ## Dataflow Interpretation
 
@@ -224,7 +235,7 @@ SAFER semantic data runtime:
   dimension-scoped keyed update, lineage, aggregation, materialization, persistence, expansion
 ```
 
-This is the implicit combination between cognitive architecture and data infrastructure. Soar supplies the active reasoning loop. SAFER supplies the disciplined state-evolution substrate for larger semantic data applications.
+This is the implicit combination between cognitive architecture and data infrastructure. Soar supplies the active reasoning loop and control policy, including when to automate, when to ask for review, and when to block or roll back a commitment. SAFER supplies the disciplined state-evolution substrate for larger semantic data applications. The value is not that local domain logic becomes possible; it is that commitments across domains — including schema evolution, versioning, rollback, replay, retention, human intervention, and downstream invalidation — can be coordinated, audited, and automated through a shared control vocabulary.
 
 ## Aggregation and Expand
 
@@ -406,7 +417,7 @@ This is especially relevant for systems that need to accumulate and reason over 
 - data and ML platforms with evolving semantic models
 - hybrid symbolic-statistical systems
 
-For data applications, the practical significance is that keyed update, aggregation, lineage, and retrieval can be described using one shared semantic vocabulary instead of being spread across backend conventions and application-specific code. For Soar-style cognitive architectures, the same vocabulary clarifies which capabilities remain naturally expressed through working memory, productions, episodic memory, semantic memory, or external modules, and which additional memory-side options are worth making explicit.
+For data applications, the practical significance is end-to-end automation with explicit semantic control. Keyed update, aggregation, lineage, retrieval, policy, validation, schema evolution, versioning, rollback, replay, retention, human review, and downstream effects can be described using one shared vocabulary instead of being scattered across backend conventions and application-specific code. For Soar-style cognitive architectures, the same vocabulary clarifies which capabilities remain naturally expressed through working memory, productions, episodic memory, semantic memory, or external modules, and which additional memory-side options are worth making explicit.
 
 ## Current Status
 
@@ -439,7 +450,8 @@ The project is moving toward a layered architecture:
 ```text
 Control / Agent Layer
   - task policy
-  - automation
+  - automation policy
+  - human review and escalation policy
   - exploration strategy
   - optional Soar-based control over semantic data applications
 
@@ -453,6 +465,7 @@ Semantic Layer
   - aggregation
   - expansion
   - semantic function schemas
+  - update and lifecycle policies
 
 Bridging Layer
   - compilation from semantic operators to dataflow programs
@@ -488,4 +501,4 @@ function-aware reconstruction through declared semantic schemas
 incremental maintenance of compositional semantic state
 ```
 
-In data applications, SAFER gives keyed updates a shared semantic vocabulary and connects them to aggregation, refinement, expansion, and compositional reuse. In Soar-native semantic memory, SAFER provides a way to discuss the same operations as explicit architectural choices around memory commands, retrieval, trace capture, aggregation, and generation. In hybrid applications, Soar can provide the control layer while a SAFER-style runtime maintains governed semantic state outside the cognitive core.
+In data applications, SAFER gives keyed updates a shared semantic vocabulary and connects them to aggregation, refinement, expansion, compositional reuse, policy, lifecycle, human review, and downstream control. The main contribution is end-to-end semantic automation across domains through a unified control plane, not the replacement of local domain logic or human judgment. This includes operational semantics such as schema evolution, versioning, rollback, replay, retention, and invalidation. In Soar-native semantic memory, SAFER provides a way to discuss the same operations as explicit architectural choices around memory commands, retrieval, trace capture, aggregation, and generation. In hybrid applications, Soar can provide the control layer while a SAFER-style runtime maintains governed semantic state outside the cognitive core.

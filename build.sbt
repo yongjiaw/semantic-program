@@ -6,5 +6,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "CognitiveKernel",
     libraryDependencies ++= Seq("org.scalatest" %% "scalatest" % "3.2.18" % Test),
-    Test / testOptions += Tests.Argument("-oD")
+    Test / testOptions += Tests.Argument("-oD"),
+    // Soar SML JARs (unmanaged, copied to lib/)
+    Compile / unmanagedJars += Attributed.blank(file("../Soar/out/java/sml.jar"))
   )
