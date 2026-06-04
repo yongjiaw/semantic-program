@@ -8,8 +8,9 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ../../examples/notebooks:/home/work
-      - ~/.m2:/home/.m2
+      - ../../examples/notebooks:/home/jovyan/work
+      - ../../../Soar:/home/jovyan/Soar
+      - ~/.m2:/home/jovyan/.m2
     environment:
       - JUPYTER_TOKEN=scala-notebook-token
       - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
